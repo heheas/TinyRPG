@@ -3,6 +3,7 @@ import { Application, Assets, Sprite } from "pixi.js";
 (async () => {
   // Create a new application
   const app = new Application();
+  const ASSET_PATH = `${import.meta.env.BASE_URL}/assets`;
 
   // Initialize the application
   await app.init({ background: "#1099bb", resizeTo: window });
@@ -11,7 +12,7 @@ import { Application, Assets, Sprite } from "pixi.js";
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   // Load the bunny texture
-  const texture = await Assets.load("/TinyRPG/assets/bunny.png");
+  const texture = await Assets.load(`${ASSET_PATH}/bunny.png`);
 
   // Create a bunny Sprite
   const bunny = new Sprite(texture);
