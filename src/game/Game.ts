@@ -1,9 +1,15 @@
 import { Application } from "pixi.js";
-import { Grid } from "./Grid.ts";
-import { GameWorld } from "./GameWorld.ts";
-import { Player } from "../player/Player.ts";
+import { Grid } from "./Grid";
+import { GameWorld } from "./GameWorld";
+import { Player } from "../player/Player";
 
 export class Game {
+  public readonly app: Application;
+  public readonly grid: Grid;
+
+  public world: GameWorld | null;
+  public player: Player | null;
+
   constructor() {
     this.app = new Application();
 
@@ -13,7 +19,7 @@ export class Game {
     this.player = null;
   }
 
-  async initialize() {
+  public async initialize(): Promise<void> {
     await this.app.init({
       width: 576,
       height: 384,
@@ -29,20 +35,24 @@ export class Game {
     this.setupInput();
   }
 
-  createWorld() {
+  private createWorld(): void {
     this.world = new GameWorld(this.grid);
 
     this.app.stage.addChild(this.world.view);
   }
 
-  createPlayer() {
+  private createPlayer(): void {
     this.player = new Player(this.grid);
 
     this.app.stage.addChild(this.player.view);
   }
 
-  setupInput() {
-    window.addEventListener("keydown", (event) => {
+  private setupInput(): void {
+    window.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (this.player === null) {
+        return;
+      }
+
       switch (event.key) {
         case "ArrowUp":
         case "w":
