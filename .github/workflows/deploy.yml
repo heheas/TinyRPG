@@ -1,15 +1,20 @@
-name: Build and Deploy TinyRPG
+name: Build and Deploy Test Version
 
 on:
   push:
-    branches:
+    branches-ignore:
       - main
+
+  pull_request:
+    types:
+      - closed
 
 permissions:
   contents: read
 
 jobs:
-  build-and-deploy:
+  deploy-test:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +33,17 @@ jobs:
       - name: Build TinyRPG
         run: npm run build
 
+      - name: Create branch directory name
+        id: branch
+        shell: bash
+        run: |
+          BRANCH_NAME="${GITHUB_REF_NAME}"
+
+          # Replace characters that are inconvenient in URLs/paths
+          SAFE_NAME=$(echo "$BRANCH_NAME" | tr '/ ' '--' | tr -cd '[:alnum:]._-')
+
+          echo "name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
+
       - name: Checkout website repository
         uses: actions/checkout@v4
         with:
@@ -35,23 +51,75 @@ jobs:
           token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
           path: website
 
-      - name: Replace TinyRPG build
+      - name: Replace branch test deployment
         run: |
-          rm -rf website/TinyRPG
-          mkdir -p website/TinyRPG
-          cp -R dist/. website/TinyRPG/
+          BRANCH_DIR="website/TinyRPG/Test/${{ steps.branch.outputs.name }}"
 
-      - name: Commit and push TinyRPG
+          rm -rf "$BRANCH_DIR"
+          mkdir -p "$BRANCH_DIR"
+
+          cp -R dist/. "$BRANCH_DIR/"
+
+      - name: Commit and push test deployment
         working-directory: website
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add TinyRPG
+          git add TinyRPG/Test
 
           if git diff --cached --quiet; then
             echo "No changes to deploy."
           else
-            git commit -m "Deploy TinyRPG"
+            git commit -m "Deploy TinyRPG test: ${{ steps.branch.outputs.name }}"
+            git push
+          fi
+
+  remove-test:
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create branch directory name
+        id: branch
+        shell: bash
+        run: |
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+
+          SAFE_NAME=$(echo "$BRANCH_NAME" | tr '/ ' '--' | tr -cd '[:alnum:]._-')
+
+          echo "name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout website repository
+        uses: actions/checkout@v4
+        with:
+          repository: heheas/heheas.github.io
+          token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+          path: website
+
+      - name: Remove branch test deployment
+        run: |
+          BRANCH_DIR="website/TinyRPG/Test/${{ steps.branch.outputs.name }}"
+
+          echo "Removing $BRANCH_DIR"
+
+          rm -rf "$BRANCH_DIR"
+
+      - name: Commit and push removal
+        working-directory: website
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add TinyRPG/Test
+
+          if git diff --cached --quiet; then
+            echo "No test deployment to remove."
+          else
+            git commit -m "Remove TinyRPG test: ${{ steps.branch.outputs.name }}"
             git push
           fi
