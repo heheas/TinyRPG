@@ -6,5 +6,6 @@ export default defineConfig({
     port: 8080,
     open: true,
   },
-  base: "/TinyRPG/",
+
+  base: process.env.VITE_BASE_PATH || "/TinyRPG/",
 });
