@@ -30,7 +30,7 @@ export class GameWorld {
             worldPosition.x,
             worldPosition.y,
             this.grid.cellSize,
-            this.grid.cellSize
+            this.grid.cellSize,
           )
           .fill(0x263238)
           .stroke({
