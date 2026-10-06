@@ -1,6 +1,7 @@
 import { Container, Graphics } from "pixi.js";
 
 export class Player {
+  //const ASSET_PATH = `${import.meta.env.BASE_URL}/assets`;
   constructor(grid) {
     this.grid = grid;
 
