@@ -1,7 +1,13 @@
 import { Container, Graphics } from "pixi.js";
+import { Grid } from "./Grid";
 
 export class GameWorld {
-  constructor(grid) {
+  public readonly grid: Grid;
+  public readonly width: number;
+  public readonly height: number;
+  public readonly view: Container;
+
+  constructor(grid: Grid) {
     this.grid = grid;
 
     this.width = 12;
@@ -12,7 +18,7 @@ export class GameWorld {
     this.createGrid();
   }
 
-  createGrid() {
+  private createGrid(): void {
     const graphics = new Graphics();
 
     for (let y = 0; y < this.height; y++) {
@@ -24,7 +30,7 @@ export class GameWorld {
             worldPosition.x,
             worldPosition.y,
             this.grid.cellSize,
-            this.grid.cellSize,
+            this.grid.cellSize
           )
           .fill(0x263238)
           .stroke({
