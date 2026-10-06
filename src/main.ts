@@ -1,5 +1,5 @@
-import { Game } from "./game/Game.ts";
+import { Game } from "./game/Game";
 
 const game = new Game();
 
-await game.initialize();
+game.initialize();
