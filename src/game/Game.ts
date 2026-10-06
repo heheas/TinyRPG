@@ -1,7 +1,7 @@
 import { Application } from "pixi.js";
-import { Grid } from "./Grid.js";
-import { GameWorld } from "./GameWorld.js";
-import { Player } from "../player/Player.js";
+import { Grid } from "./Grid.ts";
+import { GameWorld } from "./GameWorld.ts";
+import { Player } from "../player/Player.ts";
 
 export class Game {
   constructor() {
