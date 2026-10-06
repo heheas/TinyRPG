@@ -7,5 +7,5 @@ export default defineConfig({
     open: true,
   },
 
-  base: process.env.VITE_BASE_PATH || "/TinyRPG/",
+  base: process.env.VITE_BASE_PATH || "/TinyRPG",
 });
