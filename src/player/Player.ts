@@ -25,9 +25,7 @@ export class Player {
   }
 
   updatePosition() {
-    const position = this.grid.gridToWorld(
-      this.gridX, this.gridY
-    );
+    const position = this.grid.gridToWorld(this.gridX, this.gridY);
 
     this.view.x = position.x;
     this.view.y = position.y;
