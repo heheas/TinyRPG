@@ -29,10 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Build TinyRPG
-        run: npm run build
-
+        
       - name: Create branch directory name
         id: branch
         shell: bash
@@ -43,6 +40,10 @@ jobs:
           SAFE_NAME=$(echo "$BRANCH_NAME" | tr '/ ' '--' | tr -cd '[:alnum:]._-')
 
           echo "name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
+          echo "VITE_BASE_PATH=/TinyRPG/Test/$SAFE_NAME/" >> "$GITHUB_ENV"
+
+      - name: Build TinyRPG
+        run: npm run build
 
       - name: Checkout website repository
         uses: actions/checkout@v4
