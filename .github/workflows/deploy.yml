@@ -13,38 +13,87 @@ permissions:
   contents: read
 
 jobs:
+
+  # ============================================================
+  # BUILD AND DEPLOY TEST VERSION
+  # Runs whenever a normal push is made to a non-main branch.
+  # ============================================================
   deploy-test:
-    if: github.event_name == 'push'
+    if: >
+      github.event_name == 'push' &&
+      github.event.deleted == false
+
     runs-on: ubuntu-latest
 
     steps:
+
+      # --------------------------------------------------------
+      # Checkout TinyRPG
+      # --------------------------------------------------------
       - name: Checkout TinyRPG
         uses: actions/checkout@v4
 
+      # --------------------------------------------------------
+      # Setup Node.js
+      # --------------------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
+      # --------------------------------------------------------
+      # Install dependencies
+      # --------------------------------------------------------
       - name: Install dependencies
         run: npm ci
-        
+
+      # --------------------------------------------------------
+      # Determine the branch directory name
+      #
+      # Example:
+      # feature/town-system
+      #
+      # becomes:
+      # feature-town-system
+      # --------------------------------------------------------
       - name: Create branch directory name
         id: branch
         shell: bash
         run: |
           BRANCH_NAME="${GITHUB_REF_NAME}"
 
-          # Replace characters that are inconvenient in URLs/paths
-          SAFE_NAME=$(echo "$BRANCH_NAME" | tr '/ ' '--' | tr -cd '[:alnum:]._-')
+          # Replace "/" and spaces with "-"
+          SAFE_NAME="${BRANCH_NAME//\//-}"
+          SAFE_NAME="${SAFE_NAME// /-}"
+
+          # Remove anything that is not a letter, number,
+          # period, underscore, or hyphen
+          SAFE_NAME=$(echo "$SAFE_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
+
+          echo "Branch name: $BRANCH_NAME"
+          echo "Safe directory name: $SAFE_NAME"
 
           echo "name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
+
+          # Tell Vite where this test build will live
           echo "VITE_BASE_PATH=/TinyRPG/Test/$SAFE_NAME/" >> "$GITHUB_ENV"
 
+      # --------------------------------------------------------
+      # Build TinyRPG
+      #
+      # Vite will use:
+      #
+      # /TinyRPG/Test/<branch-name>/
+      #
+      # as its base path.
+      # --------------------------------------------------------
       - name: Build TinyRPG
         run: npm run build
 
+      # --------------------------------------------------------
+      # Checkout website repository
+      # --------------------------------------------------------
       - name: Checkout website repository
         uses: actions/checkout@v4
         with:
@@ -52,15 +101,23 @@ jobs:
           token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
           path: website
 
+      # --------------------------------------------------------
+      # Replace this branch's test deployment
+      # --------------------------------------------------------
       - name: Replace branch test deployment
         run: |
           BRANCH_DIR="website/TinyRPG/Test/${{ steps.branch.outputs.name }}"
+
+          echo "Deploying to $BRANCH_DIR"
 
           rm -rf "$BRANCH_DIR"
           mkdir -p "$BRANCH_DIR"
 
           cp -R dist/. "$BRANCH_DIR/"
 
+      # --------------------------------------------------------
+      # Commit and push test deployment
+      # --------------------------------------------------------
       - name: Commit and push test deployment
         working-directory: website
         run: |
@@ -76,7 +133,11 @@ jobs:
             git push
           fi
 
-  remove-test:
+
+  # ============================================================
+  # REMOVE TEST VERSION AFTER PR MERGE
+  # ============================================================
+  remove-test-after-merge:
     if: >
       github.event_name == 'pull_request' &&
       github.event.action == 'closed' &&
@@ -85,16 +146,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # --------------------------------------------------------
+      # Determine branch directory name
+      # --------------------------------------------------------
       - name: Create branch directory name
         id: branch
         shell: bash
         run: |
           BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
 
-          SAFE_NAME=$(echo "$BRANCH_NAME" | tr '/ ' '--' | tr -cd '[:alnum:]._-')
+          SAFE_NAME="${BRANCH_NAME//\//-}"
+          SAFE_NAME="${SAFE_NAME// /-}"
+
+          SAFE_NAME=$(echo "$SAFE_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
+
+          echo "Branch name: $BRANCH_NAME"
+          echo "Safe directory name: $SAFE_NAME"
 
           echo "name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
 
+      # --------------------------------------------------------
+      # Checkout website repository
+      # --------------------------------------------------------
       - name: Checkout website repository
         uses: actions/checkout@v4
         with:
@@ -102,6 +176,9 @@ jobs:
           token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
           path: website
 
+      # --------------------------------------------------------
+      # Remove the branch test deployment
+      # --------------------------------------------------------
       - name: Remove branch test deployment
         run: |
           BRANCH_DIR="website/TinyRPG/Test/${{ steps.branch.outputs.name }}"
@@ -110,6 +187,89 @@ jobs:
 
           rm -rf "$BRANCH_DIR"
 
+      # --------------------------------------------------------
+      # Commit and push removal
+      # --------------------------------------------------------
+      - name: Commit and push removal
+        working-directory: website
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add TinyRPG/Test
+
+          if git diff --cached --quiet; then
+            echo "No test deployment to remove."
+          else
+            git commit -m "Remove TinyRPG test: ${{ steps.branch.outputs.name }}"
+            git push
+          fi
+
+
+  # ============================================================
+  # REMOVE TEST VERSION WHEN BRANCH IS DELETED
+  #
+  # This handles:
+  #
+  # git push origin --delete feature/town-system
+  #
+  # or deleting the branch through GitHub.
+  # ============================================================
+  remove-test-after-branch-delete:
+    if: >
+      github.event_name == 'push' &&
+      github.event.deleted == true
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # --------------------------------------------------------
+      # Determine the deleted branch name
+      #
+      # For a deleted branch, GITHUB_REF_NAME may not be
+      # reliable, so extract the branch name from GITHUB_REF.
+      # --------------------------------------------------------
+      - name: Create branch directory name
+        id: branch
+        shell: bash
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+
+          SAFE_NAME="${BRANCH_NAME//\//-}"
+          SAFE_NAME="${SAFE_NAME// /-}"
+
+          SAFE_NAME=$(echo "$SAFE_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
+
+          echo "Deleted branch: $BRANCH_NAME"
+          echo "Safe directory name: $SAFE_NAME"
+
+          echo "name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
+
+      # --------------------------------------------------------
+      # Checkout website repository
+      # --------------------------------------------------------
+      - name: Checkout website repository
+        uses: actions/checkout@v4
+        with:
+          repository: heheas/heheas.github.io
+          token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+          path: website
+
+      # --------------------------------------------------------
+      # Remove the branch test deployment
+      # --------------------------------------------------------
+      - name: Remove branch test deployment
+        run: |
+          BRANCH_DIR="website/TinyRPG/Test/${{ steps.branch.outputs.name }}"
+
+          echo "Removing $BRANCH_DIR"
+
+          rm -rf "$BRANCH_DIR"
+
+      # --------------------------------------------------------
+      # Commit and push removal
+      # --------------------------------------------------------
       - name: Commit and push removal
         working-directory: website
         run: |
