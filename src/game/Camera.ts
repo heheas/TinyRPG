@@ -8,11 +8,8 @@ export class Camera {
   private readonly viewportWidth: number;
   private readonly viewportHeight: number;
 
-  private readonly followMarginX: number;
-  private readonly followMarginY: number;
-
-  private world: GameWorld;
-  private player: Player;
+  private readonly world: GameWorld;
+  private readonly player: Player;
 
   constructor(
     world: GameWorld,
@@ -26,51 +23,28 @@ export class Camera {
     this.viewportWidth = viewportWidth;
     this.viewportHeight = viewportHeight;
 
-    // How far the player can move toward the edge
-    // before the camera starts following.
-    this.followMarginX = 160;
-    this.followMarginY = 100;
-
     this.view = new Container();
 
     this.view.addChild(this.world.view);
+    this.view.addChild(this.player.view);
 
     this.update();
   }
 
   public update(): void {
-    const playerX = this.player.view.x;
-    const playerY = this.player.view.y;
+    const playerWorldX = this.player.view.x;
+    const playerWorldY = this.player.view.y;
 
-    let cameraX = this.view.x;
-    let cameraY = this.view.y;
+    // Put the player in the center of the viewport.
+    let cameraX =
+      this.viewportWidth / 2 -
+      playerWorldX -
+      this.player.view.width / 2;
 
-    const leftBoundary = this.followMarginX;
-    const rightBoundary =
-      this.viewportWidth - this.followMarginX;
-
-    const topBoundary = this.followMarginY;
-    const bottomBoundary =
-      this.viewportHeight - this.followMarginY;
-
-    const playerScreenX = playerX + cameraX;
-    const playerScreenY = playerY + cameraY;
-
-    if (playerScreenX < leftBoundary) {
-      cameraX += leftBoundary - playerScreenX;
-    }
-
-    if (playerScreenX > rightBoundary) {
-      cameraX -= playerScreenX - rightBoundary;
-    }
-
-    if (playerScreenY < topBoundary) {
-      cameraY += topBoundary - playerScreenY;
-    }
-
-    if (playerScreenY > bottomBoundary) {
-      cameraY -= playerScreenY - bottomBoundary;
-    }
+    let cameraY =
+      this.viewportHeight / 2 -
+      playerWorldY -
+      this.player.view.height / 2;
 
     this.view.x = cameraX;
     this.view.y = cameraY;
@@ -85,6 +59,8 @@ export class Camera {
     const worldHeight =
       this.world.height * this.world.grid.cellSize;
 
+    // Don't allow the camera to reveal anything
+    // outside the world.
     const minX = this.viewportWidth - worldWidth;
     const minY = this.viewportHeight - worldHeight;
 
