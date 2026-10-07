@@ -34,7 +34,9 @@ export class Game {
     });
 
     // Append the application canvas to the document body
-    document.getElementById("tinyrpg-container")!.appendChild(this.app.canvas);
+    document
+      .getElementById("tinyrpg-container")!
+      .appendChild(this.app.canvas);
 
     this.createWorld();
     this.createPlayer();
@@ -49,6 +51,12 @@ export class Game {
 
   private createPlayer(): void {
     this.player = new Player(this.grid);
+
+    // Start the player near the center of the world.
+    this.player.gridX = 100;
+    this.player.gridY = 100;
+
+    this.player.updatePosition();
   }
 
   private createCamera(): void {
@@ -62,8 +70,6 @@ export class Game {
       this.viewportWidth,
       this.viewportHeight
     );
-
-    this.camera.view.addChild(this.player.view);
 
     this.app.stage.addChild(this.camera.view);
   }
