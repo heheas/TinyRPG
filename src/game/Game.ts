@@ -1,6 +1,7 @@
 import { Application } from "pixi.js";
 import { Grid } from "./Grid";
 import { GameWorld } from "./GameWorld";
+import { Camera } from "./Camera";
 import { Player } from "../player/Player";
 
 export class Game {
@@ -9,6 +10,10 @@ export class Game {
 
   public world: GameWorld | null;
   public player: Player | null;
+  public camera: Camera | null;
+
+  private readonly viewportWidth = 576;
+  private readonly viewportHeight = 384;
 
   constructor() {
     this.app = new Application();
@@ -17,12 +22,13 @@ export class Game {
 
     this.world = null;
     this.player = null;
+    this.camera = null;
   }
 
   public async initialize(): Promise<void> {
     await this.app.init({
-      width: 576,
-      height: 384,
+      width: this.viewportWidth,
+      height: this.viewportHeight,
       background: 0x111111,
       antialias: true,
     });
@@ -32,53 +38,72 @@ export class Game {
 
     this.createWorld();
     this.createPlayer();
+    this.createCamera();
 
     this.setupInput();
   }
 
   private createWorld(): void {
     this.world = new GameWorld(this.grid);
-
-    this.app.stage.addChild(this.world.view);
   }
 
   private createPlayer(): void {
     this.player = new Player(this.grid);
+  }
 
-    this.app.stage.addChild(this.player.view);
+  private createCamera(): void {
+    if (this.world === null || this.player === null) {
+      return;
+    }
+
+    this.camera = new Camera(
+      this.world,
+      this.player,
+      this.viewportWidth,
+      this.viewportHeight
+    );
+
+    this.camera.view.addChild(this.player.view);
+
+    this.app.stage.addChild(this.camera.view);
   }
 
   private setupInput(): void {
-    window.addEventListener("keydown", (event: KeyboardEvent) => {
-      if (this.player === null) {
-        return;
+    window.addEventListener(
+      "keydown",
+      (event: KeyboardEvent) => {
+        if (this.player === null) {
+          return;
+        }
+
+        switch (event.key) {
+          case "ArrowUp":
+          case "w":
+          case "W":
+            this.player.move(0, -1);
+            break;
+
+          case "ArrowDown":
+          case "s":
+          case "S":
+            this.player.move(0, 1);
+            break;
+
+          case "ArrowLeft":
+          case "a":
+          case "A":
+            this.player.move(-1, 0);
+            break;
+
+          case "ArrowRight":
+          case "d":
+          case "D":
+            this.player.move(1, 0);
+            break;
+        }
+
+        this.camera?.update();
       }
-
-      switch (event.key) {
-        case "ArrowUp":
-        case "w":
-        case "W":
-          this.player.move(0, -1);
-          break;
-
-        case "ArrowDown":
-        case "s":
-        case "S":
-          this.player.move(0, 1);
-          break;
-
-        case "ArrowLeft":
-        case "a":
-        case "A":
-          this.player.move(-1, 0);
-          break;
-
-        case "ArrowRight":
-        case "d":
-        case "D":
-          this.player.move(1, 0);
-          break;
-      }
-    });
+    );
   }
 }
