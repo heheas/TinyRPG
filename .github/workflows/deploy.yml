@@ -1,4 +1,3 @@
-```yaml
 name: Build and Deploy Test Version
 
 on:
@@ -322,4 +321,3 @@ jobs:
             git commit -m "Remove TinyRPG test: ${{ steps.branch.outputs.name }}"
             git push
           fi
-```
