@@ -2,7 +2,6 @@ import { Container, Graphics } from "pixi.js";
 import { Grid } from "../game/Grid";
 
 export class Player {
-  //const ASSET_PATH = `${import.meta.env.BASE_URL}/assets`;
   public readonly grid: Grid;
   public readonly view: Container;
 
@@ -12,8 +11,9 @@ export class Player {
   constructor(grid: Grid) {
     this.grid = grid;
 
-    this.gridX = 5;
-    this.gridY = 3;
+    // Start in the center of the 200 × 200 world.
+    this.gridX = 100;
+    this.gridY = 100;
 
     this.view = new Container();
 
@@ -25,20 +25,32 @@ export class Player {
     const graphics = new Graphics();
 
     graphics
-      .roundRect(8, 8, this.grid.cellSize - 16, this.grid.cellSize - 16, 8)
+      .roundRect(
+        8,
+        8,
+        this.grid.cellSize - 16,
+        this.grid.cellSize - 16,
+        8
+      )
       .fill(0x4da6ff);
 
     this.view.addChild(graphics);
   }
 
   private updatePosition(): void {
-    const position = this.grid.gridToWorld(this.gridX, this.gridY);
+    const position = this.grid.gridToWorld(
+      this.gridX,
+      this.gridY
+    );
 
     this.view.x = position.x;
     this.view.y = position.y;
   }
 
-  public move(directionX: number, directionY: number): void {
+  public move(
+    directionX: number,
+    directionY: number
+  ): void {
     this.gridX += directionX;
     this.gridY += directionY;
 
