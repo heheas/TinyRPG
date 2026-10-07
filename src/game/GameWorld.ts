@@ -7,6 +7,8 @@ export class GameWorld {
   public readonly height: number;
   public readonly view: Container;
 
+  private readonly treeCount = 300;
+
   constructor(grid: Grid) {
     this.grid = grid;
 
@@ -16,6 +18,7 @@ export class GameWorld {
     this.view = new Container();
 
     this.createGrid();
+    this.createTrees();
   }
 
   private createGrid(): void {
@@ -30,7 +33,7 @@ export class GameWorld {
             worldPosition.x,
             worldPosition.y,
             this.grid.cellSize,
-            this.grid.cellSize,
+            this.grid.cellSize
           )
           .fill(0x263238)
           .stroke({
@@ -41,5 +44,27 @@ export class GameWorld {
     }
 
     this.view.addChild(graphics);
+  }
+
+  private createTrees(): void {
+    const trees = new Graphics();
+
+    for (let i = 0; i < this.treeCount; i++) {
+      const gridX = Math.floor(Math.random() * this.width);
+      const gridY = Math.floor(Math.random() * this.height);
+
+      const worldPosition = this.grid.gridToWorld(gridX, gridY);
+
+      trees
+        .rect(
+          worldPosition.x + 8,
+          worldPosition.y + 8,
+          this.grid.cellSize - 16,
+          this.grid.cellSize - 16
+        )
+        .fill(0x2e7d32);
+    }
+
+    this.view.addChild(trees);
   }
 }
