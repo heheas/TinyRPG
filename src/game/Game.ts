@@ -12,8 +12,6 @@ export class Game {
 
   constructor() {
     this.app = new Application();
-    // Append the application canvas to the document body
-    document.getElementById("tinyrpg-container")!.appendChild(this.app.canvas);
 
     this.grid = new Grid(48);
 
@@ -29,7 +27,8 @@ export class Game {
       antialias: true,
     });
 
-    document.body.appendChild(this.app.canvas);
+    // Append the application canvas to the document body
+    document.getElementById("tinyrpg-container")!.appendChild(this.app.canvas);
 
     this.createWorld();
     this.createPlayer();
