@@ -10,8 +10,8 @@ export class GameWorld {
   constructor(grid: Grid) {
     this.grid = grid;
 
-    this.width = 12;
-    this.height = 8;
+    this.width = 200;
+    this.height = 200;
 
     this.view = new Container();
 
