@@ -12,6 +12,9 @@ export class Game {
 
   constructor() {
     this.app = new Application();
+    
+    // Append the application canvas to the document body
+    document.getElementById("pixi-container")!.appendChild(this.app.canvas);
 
     this.grid = new Grid(48);
 
