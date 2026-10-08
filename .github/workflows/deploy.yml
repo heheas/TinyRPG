@@ -10,7 +10,7 @@ on:
       - closed
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
 
@@ -47,44 +47,7 @@ jobs:
       # --------------------------------------------------------
       - name: Install dependencies
         run: npm ci
-
-      # --------------------------------------------------------
-      # Automatically fix formatting and linting
-      #
-      # Prettier formats the project.
-      # ESLint automatically fixes anything it can.
-      # --------------------------------------------------------
-      - name: Fix formatting and linting
-        run: |
-          npx prettier . --write
-          npm run lint -- --fix
-
-      # --------------------------------------------------------
-      # Commit automatic fixes
-      #
-      # If Prettier or ESLint changed anything, commit those
-      # changes back to the branch.
-      #
-      # The resulting push will trigger this workflow again,
-      # but the second run should have no changes to commit.
-      # --------------------------------------------------------
-      - name: Commit automatic fixes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git diff --quiet; then
-            echo "No formatting or linting changes needed."
-          else
-            echo "Formatting or linting fixes detected."
-
-            git add .
-
-            git commit -m "chore: auto-fix formatting and linting"
-
-            git push
-          fi
-
+        
       # --------------------------------------------------------
       # Determine the branch directory name
       #
