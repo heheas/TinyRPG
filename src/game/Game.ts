@@ -51,12 +51,6 @@ export class Game {
 
   private createPlayer(): void {
     this.player = new Player(this.grid);
-
-    // Start the player near the center of the world.
-    this.player.gridX = 100;
-    this.player.gridY = 100;
-
-    this.player.updatePosition();
   }
 
   private createCamera(): void {
